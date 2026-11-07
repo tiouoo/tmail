@@ -8,7 +8,7 @@
 
 1. 点击下方 **Deploy with Vercel** 按钮, Deploy Button 会在创建项目时提示填写核心环境变量. 部署完成后, 绑定访问域名
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ftiouoo%2Fmail-transfer&env=TURSO_DATABASE_URL,TURSO_AUTH_TOKEN,SESSION_SECRET,EMAIL_DOMAINS,FORWARD_TO,ARCHIVE_RECIPIENT,TURNSTILE_ENABLED,TURNSTILE_SITE_KEY,TURNSTILE_SECRET,TURNSTILE_HOSTNAMES&envDescription=Configure%20database%2C%20mail%20routing%2C%20session%20signing%2C%20and%20optional%20Turnstile%20credentials.&envLink=https%3A%2F%2Fgithub.com%2Ftiouoo%2Fmail-transfer%2Fblob%2Fmain%2F.env.example&project-name=tmail&repository-name=mail-transfer)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ftiouoo%2Ftmail&env=TURSO_DATABASE_URL,TURSO_AUTH_TOKEN,SESSION_SECRET,EMAIL_DOMAINS,FORWARD_TO,ARCHIVE_RECIPIENT,TURNSTILE_ENABLED,TURNSTILE_SITE_KEY,TURNSTILE_SECRET,TURNSTILE_HOSTNAMES&envDescription=Configure%20database%2C%20mail%20routing%2C%20session%20signing%2C%20and%20optional%20Turnstile%20credentials.&envLink=https%3A%2F%2Fgithub.com%2Ftiouoo%2Ftmail%2Fblob%2Fmain%2F.env.example&project-name=tmail&repository-name=tmail)
 
 2. 在 Cloudflare 创建与 `wrangler.jsonc` 中 `name` 一致的 Worker, 并在 Worker 的 Settings → Variables and Secrets 中设置相同的应用变量. 并且在 GitHub 仓库 Setting → Secrets and variables → Actions 添加两个secret `CLOUDFLARE_ACCOUNT_ID` , `CLOUDFLARE_API_TOKEN` 分别为你的Cloudflare账户ID和拥有编辑worker权限的token
 
