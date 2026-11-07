@@ -1,7 +1,7 @@
 // Public defaults. Keep credentials and deployment-specific addresses in environment variables.
 export default {
   name: "Tmail",
-  github: "https://github.com/tiouoo/mail-transfer",
+  github: "https://github.com/tiouoo/tmail",
   features: {
     temporaryMail: true,
     forward: true,
