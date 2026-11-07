@@ -28,7 +28,8 @@ export async function matchesPrivateEntry(request, env) {
   let segments;
   try { segments = new URL(request.url).pathname.split('/').slice(1).map(decodeURIComponent); }
   catch { return false; }
-  if (segments.length !== 2) return false;
+  if (segments.length !== 2 && segments.length !== 3) return false;
+  if (segments.length === 3 && !/^[A-Za-z0-9_-]{1,128}$/.test(segments[2])) return false;
   if (!(await equalSecret(segments[0], secret.path))) return false;
   // Rate-limit password attempts without revealing the configured path in responses.
   const ip = request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim()

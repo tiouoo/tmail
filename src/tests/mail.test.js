@@ -55,7 +55,8 @@ test('secret inbox requires full entry and an isolated signed cookie, and is rea
   const privateEnv = { ...env, PRIVATE_MAIL_PATH: 'hidden-test', PRIVATE_MAIL_PASSWORD: 'test-password!' };
   const entry = new Request(`${origin}/hidden-test/test-password!`);
   assert.equal(await matchesPrivateEntry(entry, privateEnv), true);
-  for (const path of ['/hidden-test', '/hidden-test/wrong', '/hidden-test/test-password!/extra', '/unknown/test-password!'])
+  assert.equal(await matchesPrivateEntry(new Request(`${origin}/hidden-test/test-password!/message-id`), privateEnv), true);
+  for (const path of ['/hidden-test', '/hidden-test/wrong', '/hidden-test/test-password!/extra/more', '/hidden-test/test-password!/', '/hidden-test/test-password!/%2F', '/hidden-test/wrong/message-id', '/unknown/test-password!/message-id', '/unknown/test-password!'])
     assert.equal(await matchesPrivateEntry(new Request(origin + path), privateEnv), false);
   assert.equal(await matchesPrivateEntry(entry, env), false);
   assert.equal(await matchesPrivateEntry(entry, { ...privateEnv, PRIVATE_MAIL_PASSWORD: '' }), false);
@@ -134,6 +135,38 @@ test("public migrations preserve the private table and records", async () => {
     1,
   );
   assert.equal(sqlite.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name IN ('tmail_mailboxes', 'tmail_routes')").get().n, 0);
+});
+
+test('HTML mail retains head styles at delivery and private details require authorization', async () => {
+  const html = '<!doctype html><html><head><style>.mail-card{background:#e0efff;color:#123456;padding:24px}</style></head><body class="mail-body"><div class="mail-card"><h1>HTML fixture</h1><p>Styled content</p></div></body></html>';
+  const raw = new TextEncoder().encode([
+    'From: sender@example.com', 'To: archive@example.com',
+    'Message-ID: <html-style-fixture@example.com>', 'Subject: HTML fixture',
+    'MIME-Version: 1.0', 'Content-Type: multipart/alternative; boundary=html-fixture', '',
+    '--html-fixture', 'Content-Type: text/plain; charset=utf-8', '', 'Plain alternative',
+    '--html-fixture', 'Content-Type: text/html; charset=utf-8', 'Content-Transfer-Encoding: base64', '',
+    Buffer.from(html).toString('base64'), '--html-fixture--', '',
+  ].join('\r\n'));
+  await rawStoreEmail({from:'sender@example.com',to:'archive@example.com',raw:new Blob([raw]).stream()}, 'private', env);
+  const row = sqlite.prepare('SELECT id, html_body, text_body FROM "private" WHERE message_id = ?').get('<html-style-fixture@example.com>');
+  try {
+    assert.equal(row.html_body, html);
+    assert.match(row.text_body, /Plain alternative/);
+    const privateEnv = {...env, PRIVATE_MAIL_PATH:'hidden-detail', PRIVATE_MAIL_PASSWORD:'test-detail-password!'};
+    const entry = `${origin}/hidden-detail/test-detail-password!`;
+    const cookie = (await privateCookie(new Request(entry), privateEnv)).split(';')[0];
+    assert.equal(await matchesPrivateEntry(new Request(`${entry}/${row.id}`), privateEnv), true);
+    assert.equal(await matchesPrivateEntry(new Request(`${origin}/hidden-detail/wrong/${row.id}`, {headers:{Cookie:cookie}}), privateEnv), false);
+    const url = `${origin}/api/private/messages/${row.id}`;
+    assert.equal((await app.request(url, {}, privateEnv)).status, 404);
+    const response = await app.request(url, {headers:{Cookie:cookie}}, privateEnv);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).html_body, html);
+    const {createMailboxToken} = await import('../worker/mailbox-token.js');
+    const publicToken = await createMailboxToken('public@t.example.com', env.SESSION_SECRET);
+    assert.equal((await app.request(url, {headers:{Cookie:`tmail_private=${publicToken}`}}, privateEnv)).status, 404);
+    assert.equal((await app.request(`${origin}/api/private/messages/nonexistent`, {headers:{Cookie:cookie}}, privateEnv)).status, 404);
+  } finally { sqlite.prepare('DELETE FROM "private" WHERE id = ?').run(row.id); }
 });
 
 test("recipient rules include all configured t subdomains", () => {
