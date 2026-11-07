@@ -944,3 +944,24 @@ hr {
 }
 /* Match the existing mail rows for the private, read-only inbox. */
 .private-mail-link { width: 100%; border: 0; background: transparent; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+.private-shell {
+  max-width: 1184px;
+  padding: 32px;
+  justify-content: center;
+}
+.private-shell > main {
+  flex: 0;
+  width: 100%;
+  padding-top: 0;
+}
+.private-shell .inbox {
+  margin-top: 0;
+  min-height: min(640px, calc(100dvh - 64px));
+}
+.private-shell .detail {
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .private-shell { padding: 16px; }
+  .private-shell .inbox { min-height: calc(100dvh - 32px); }
+}

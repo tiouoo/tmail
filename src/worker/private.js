@@ -65,7 +65,7 @@ export function privateHtml(html) {
   return html.replace('<html lang="zh-CN">', '<html lang="zh-CN" data-private-mail="true">')
     .replace('<head>', '<head><meta name="robots" content="noindex,nofollow,noarchive,nosnippet">')
     .replace(/<meta name="description"[^>]*>/, '')
-    .replace(/<title>.*?<\/title>/, '<title>秘密邮箱</title>');
+    .replace(/<title>.*?<\/title>/, '<title>收件箱</title>');
 }
 
 export function notFound() {

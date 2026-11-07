@@ -20,8 +20,7 @@ export default function PrivateInbox() {
   });
   const error = list.error || detail.error;
   const message = detail.data;
-  return <div className="app-shell">
-    <header className="header"><span className="brand">秘密邮箱<span className="brand-period">.</span></span></header>
+  return <div className="app-shell private-shell">
     <main>
       {error && <div className="notice" role="status">{error.status === 404 ? '访问已失效，请重新打开完整入口。' : error.message}</div>}
       {selected ? <article className="detail">
@@ -44,7 +43,10 @@ export default function PrivateInbox() {
               <span className="avatar">{item.envelope_from[0]?.toUpperCase()}</span>
               <span className="mail-summary"><strong>{item.subject || '（无主题）'}</strong><span>{item.envelope_from}<span className="preview"> · {item.preview}</span></span></span>
               <time>{new Date(item.received_at).toLocaleString('zh-CN')}</time><Icon name="arrow" size={15} />
-            </button></div>)}</div> : !list.error && <div className="empty"><Icon name="inbox" size={36} /><h2>收件箱里，暂时很安静</h2></div>}
+            </button></div>)}</div> : !list.error && <div className="empty">
+              <div className="empty-art"><Icon name="inbox" size={36} /><span className="empty-spark">✦</span></div>
+              <h2>收件箱里，暂时很安静</h2>
+            </div>}
         <div className="inbox-footer"><span><span className="status-dot" />自动同步已开启</span><div>
           {offset > 0 && <button className="text-button" onClick={() => setOffset(offset - 30)}>上一页</button>}
           {list.data?.hasMore && <button className="text-button" onClick={() => setOffset(offset + 30)}>下一页</button>}

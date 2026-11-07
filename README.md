@@ -20,20 +20,18 @@
 
 `config.js` 提供站点名称/GitHub 链接/功能默认值/邮箱保留时间/邮件大小上限和创建额度. 部署凭据及地址使用环境变量: 
 
-| 变量                                                                              | 用途                                                                          |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `TURSO_DATABASE_URL`、`TURSO_AUTH_TOKEN`                                          | Turso/libSQL 连接地址和读写令牌                                               |
-| `SESSION_SECRET`                                                                  | 至少 32 字符；Vercel 与 Worker 必须使用相同值, 轮换会使现有会话和邮箱凭据失效 |
-| `EMAIL_DOMAINS`                                                                   | 临时邮箱域名, 逗号分隔                                                        |
-| `FORWARD_TO`                                                                      | 普通邮件的转发目标；启用转发时必填                                            |
-| `ARCHIVE_RECIPIENT`                                                               | QQ 自动转发回来的归档收件地址                                                 |
-| `SITE_PASSWORD`                                                                   | 可选的站点访问密码                                                            |
-| `PRIVATE_MAIL_PATH`、`PRIVATE_MAIL_PASSWORD` | 可选的秘密邮箱路径与密码，仅在 Vercel/Worker 环境变量中设置；完整入口为 `/<路径>/<密码>`，只读 `private` 表，无人机验证，错误入口返回 404 |
-| `TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET`、`TURNSTILE_HOSTNAMES`                   | Turnstile 公钥、私钥和获准域名列表                                            |
-| `TURNSTILE_ENABLED`                                                               | 是否启用验证, 设为 `false` 可关闭                                             |
-| `TEMPORARY_MAIL_ENABLED`、`FORWARD_ENABLED`、`ARCHIVE_ENABLED`、`CLEANUP_ENABLED` | 功能开关, 值为 `true` 或 `false`                                              |
-
-秘密入口不出现在公开配置、链接或站点地图中，并设置禁止索引和缓存；请勿分享完整 URL（浏览器历史及托管访问日志仍可能记录它）。
+| 变量                                                                              | 用途                                                                                                                                      |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `TURSO_DATABASE_URL`、`TURSO_AUTH_TOKEN`                                          | Turso/libSQL 连接地址和读写令牌                                                                                                           |
+| `SESSION_SECRET`                                                                  | 至少 32 字符；Vercel 与 Worker 必须使用相同值, 轮换会使现有会话和邮箱凭据失效                                                             |
+| `EMAIL_DOMAINS`                                                                   | 临时邮箱域名, 逗号分隔                                                                                                                    |
+| `FORWARD_TO`                                                                      | 普通邮件的转发目标；启用转发时必填                                                                                                        |
+| `ARCHIVE_RECIPIENT`                                                               | QQ 自动转发回来的归档收件地址                                                                                                             |
+| `SITE_PASSWORD`                                                                   | 可选的站点访问密码                                                                                                                        |
+| `PRIVATE_MAIL_PATH`、`PRIVATE_MAIL_PASSWORD`                                      | 可选的秘密邮箱路径与密码，仅在 Vercel/Worker 环境变量中设置；完整入口为 `/<路径>/<密码>`，只读 `private` 表，无人机验证，错误入口返回 404 |
+| `TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET`、`TURNSTILE_HOSTNAMES`                   | Turnstile 公钥、私钥和获准域名列表                                                                                                        |
+| `TURNSTILE_ENABLED`                                                               | 是否启用验证, 设为 `false` 可关闭                                                                                                         |
+| `TEMPORARY_MAIL_ENABLED`、`FORWARD_ENABLED`、`ARCHIVE_ENABLED`、`CLEANUP_ENABLED` | 功能开关, 值为 `true` 或 `false`                                                                                                          |
 
 可使用以下代码生成 `SESSION_SECRET`:
 
