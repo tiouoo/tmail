@@ -1,8 +1,10 @@
 import { email } from "./email.js";
 import { database } from "./database.js";
 import { settings } from "../settings.js";
+import { app } from './api.js';
 
 export default {
+  fetch(request, env, ctx) { return app.fetch(request, env, ctx); },
   email,
   async scheduled(_event, env) {
     const config = settings(env);

@@ -14,6 +14,7 @@ import { createMailboxToken, verifyMailboxToken } from "./mailbox-token.js";
 import { hashToken } from "./hash.js";
 import { tableForRecipient } from "./storage.js";
 import { createMailboxAddress } from "./mailbox-name.js";
+import { privateAccess, privateHeaders } from './private.js';
 
 export const app = new Hono();
 app.use("/api/*", bodyLimit({ maxSize: 8192 }));
@@ -36,7 +37,7 @@ app.onError((error, c) => {
     console.error(
       JSON.stringify({
         operation: "api",
-        path: c.req.path,
+        path: '/api',
         error: error.name,
       }),
     );
@@ -308,4 +309,28 @@ for (const prefix of ["/api/mailboxes"]) {
   );
 }
 
+app.use('/api/private/*', async (c, next) => {
+  for (const [key, value] of Object.entries(privateHeaders)) c.header(key, value);
+  if (!(await privateAccess(c.req.raw, c.env)))
+    return c.json({ error: { message: '接口不存在' } }, 404);
+  await next();
+});
+app.get('/api/private/messages', (c) => withDatabase(c.env, async db => {
+  const offset = Math.max(0, Math.min(Math.floor(Number(c.req.query('offset')) || 0), 100000));
+  const rows = (await db.execute({
+    sql: `SELECT id, received_at, envelope_from, envelope_to, subject, substr(text_body, 1, 140) AS preview
+      FROM "private" ORDER BY received_at DESC, id DESC LIMIT ? OFFSET ?`,
+    args: [31, offset],
+  })).rows;
+  return c.json({ messages: rows.slice(0, 30), hasMore: rows.length > 30 });
+}));
+app.get('/api/private/messages/:messageId', (c) => withDatabase(c.env, async db => {
+  const message = (await db.execute({
+    sql: `SELECT id, received_at, envelope_from, envelope_to, subject, text_body, html_body
+      FROM "private" WHERE id = ?`,
+    args: [c.req.param('messageId')],
+  })).rows[0];
+  if (!message) throw new HttpError(404, '邮件不存在');
+  return c.json(message);
+}));
 app.all("/api/*", (c) => c.json({ error: { message: "接口不存在" } }, 404));

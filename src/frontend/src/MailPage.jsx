@@ -6,7 +6,7 @@ import { mailboxRequest } from "./api.js";
 import { readCache } from "./cache.js";
 import Icon from "./Icon.jsx";
 
-function htmlDocument(html, text, images) {
+export function htmlDocument(html, text, images) {
   const clean = html
     ? DOMPurify.sanitize(html, {
         WHOLE_DOCUMENT: false,

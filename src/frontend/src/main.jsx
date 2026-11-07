@@ -20,6 +20,7 @@ const Turnstile = lazy(() =>
   import("@marsidev/react-turnstile").then((m) => ({ default: m.Turnstile })),
 );
 const MailPage = lazy(() => import("./MailPage.jsx"));
+const PrivateInbox = lazy(() => import('./PrivateInbox.jsx'));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry, refetchOnWindowFocus: false, gcTime: 300000 },
@@ -545,6 +546,8 @@ function App() {
 }
 createRoot(document.getElementById("root")).render(
   <QueryClientProvider client={queryClient}>
-    <App />
+    {document.documentElement.dataset.privateMail === 'true'
+      ? <Suspense fallback={<Loading />}><PrivateInbox /></Suspense>
+      : <App />}
   </QueryClientProvider>,
 );

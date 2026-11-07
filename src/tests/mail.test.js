@@ -37,6 +37,7 @@ const { createTableSql, tableForRecipient: tableForRecipientRaw, storeEmail: raw
 const { verifyTurnstile, settings } = await import("../worker/security.js");
 const { email: rawEmail } = await import("../worker/email.js");
 const worker = (await import("../worker/index.js")).default;
+const { matchesPrivateEntry, privateCookie, privateHtml } = await import('../worker/private.js');
 const env = {
   TURSO_DATABASE_URL: "libsql://isolated-test.example.com", TURSO_AUTH_TOKEN: "test-token",
   SESSION_SECRET: "isolated-test-secret-at-least-32-characters",
@@ -50,6 +51,33 @@ const email = message => rawEmail(message, env);
 const tableForRecipient = address => tableForRecipientRaw(address, web);
 
 const origin = "https://t.example.com";
+test('secret inbox requires full entry and an isolated signed cookie, and is read-only', async () => {
+  const privateEnv = { ...env, PRIVATE_MAIL_PATH: 'hidden-test', PRIVATE_MAIL_PASSWORD: 'test-password!' };
+  const entry = new Request(`${origin}/hidden-test/test-password!`);
+  assert.equal(await matchesPrivateEntry(entry, privateEnv), true);
+  for (const path of ['/hidden-test', '/hidden-test/wrong', '/hidden-test/test-password!/extra', '/unknown/test-password!'])
+    assert.equal(await matchesPrivateEntry(new Request(origin + path), privateEnv), false);
+  assert.equal(await matchesPrivateEntry(entry, env), false);
+  assert.equal(await matchesPrivateEntry(entry, { ...privateEnv, PRIVATE_MAIL_PASSWORD: '' }), false);
+  const cookie = (await privateCookie(entry, privateEnv)).split(';')[0];
+  for (const path of ['/api/private/messages', '/api/private/messages/private-marker']) {
+    assert.equal((await app.request(origin + path, {}, privateEnv)).status, 404);
+    assert.equal((await app.request(origin + path, { headers: { Cookie: 'tmail_private=invalid' } }, privateEnv)).status, 404);
+  }
+  const response = await app.request(origin + '/api/private/messages', { headers: { Cookie: cookie } }, privateEnv);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('Cache-Control'), /no-store/);
+  assert.match(response.headers.get('X-Robots-Tag'), /noindex/);
+  assert.ok(Array.isArray((await response.json()).messages));
+  const rotated = { ...privateEnv, PRIVATE_MAIL_PASSWORD: 'new-password' };
+  assert.equal((await app.request(origin + '/api/private/messages', { headers: { Cookie: cookie } }, rotated)).status, 404);
+  assert.equal((await app.request(origin + '/api/private/messages/test', { method: 'DELETE', headers: { Cookie: cookie } }, privateEnv)).status, 404);
+  const config = await (await app.request(origin + '/api/config', {}, privateEnv)).text();
+  assert.ok(!config.includes(privateEnv.PRIVATE_MAIL_PATH) && !config.includes(privateEnv.PRIVATE_MAIL_PASSWORD));
+  const html = privateHtml('<html lang="zh-CN"><head><title>Public</title></head></html>');
+  assert.match(html, /data-private-mail="true"/);
+  assert.match(html, /noindex/);
+});
 function request(path, options = {}) {
   return app.request(origin + path, options, env);
 }
