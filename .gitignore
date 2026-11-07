@@ -1,0 +1,15 @@
+node_modules/
+.wrangler/
+dist/
+.dev.vars
+.dev.vars.*
+.wrangler-secrets.json
+.env.vercel-pending
+.env
+.env.*
+!.dev.vars.example
+!.env.example
+*.log
+worker-configuration.d.ts
+.vercel/
+/src/frontend/dist/

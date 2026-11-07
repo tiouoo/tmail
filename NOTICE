@@ -1,0 +1,23 @@
+Tmail
+Modified and integrated by tiouoo, 2026-11-07.
+
+This project includes code adapted from oiov/vmail:
+https://github.com/oiov/vmail
+Upstream commit: 0213e65cc555f7ef8ea38b34712afd6e20aa3eaa
+Classic first-email recovery reference: dc8a25c (parent of 7865745).
+Upstream author: oiov and contributors.
+License: GPL-3.0-only (see LICENSE).
+
+Adapted files:
+- src/worker/hash.js: JavaScript adaptation of the credential hashing
+  function in worker/src/key-token.ts. External API Key features were removed.
+- src/worker/mailbox-token.js: JavaScript adaptation of the mailbox credential
+  functions in worker/src/sender.ts.
+  These signatures now authorize internal requests and sessions only.
+
+Readable mailbox names use a local word list and Web Crypto to combine two
+to five words with randomly selected dot, hyphen, or underscore separators.
+
+The Tmail interface, Turso integration, internal mailbox routes, caching, and deployment
+structure were rewritten for this repository. This work is provided under
+GPL-3.0-only, without warranty. Branding has changed; upstream authorship is retained.

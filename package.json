@@ -1,0 +1,38 @@
+{
+  "name": "tmail",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "npm run frontend:dev",
+    "frontend:dev": "vite --config src/frontend/vite.config.js",
+    "worker:dev": "npm run build && wrangler dev --config wrangler.dev.jsonc",
+    "build": "vite build --config src/frontend/vite.config.js",
+    "db:init": "node --env-file-if-exists=.env src/scripts/migrate.js",
+    "deploy": "wrangler deploy --keep-vars",
+    "tail": "wrangler tail",
+    "test": "node --experimental-test-module-mocks --test src/tests/*.test.js",
+    "check:worker": "wrangler deploy --dry-run",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "@hono/vite-dev-server": "^0.26.1",
+    "@vitejs/plugin-react": "^6.2.1",
+    "vite": "^8.3.6",
+    "wrangler": "^4.158.0"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.18.0",
+    "@marsidev/react-turnstile": "^1.6.3",
+    "@tanstack/react-query": "^5.107.1",
+    "dompurify": "^3.4.17",
+    "hono": "^4.13.16",
+    "postal-mime": "^4.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "license": "GPL-3.0-only"
+}
