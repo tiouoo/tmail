@@ -5,13 +5,21 @@ body:
   - type: markdown
     attributes:
       value: |
-        提交申请前，先写好投递 API 接入代码，将 `TMAIL_KEY` 留待审核后配置。提交 Issue 时附上代码截图或链接。管理员审核通过并登记域名后，才会私下发放密钥。收到密钥后再配置并试投。[投递 API 接入文档](https://github.com/tiouoo/tmail/blob/main/INBOUND.md#cloudflare-email-worker-示例)
+        提交申请前，先写好投递 API 接入代码，将 `TMAIL_KEY` 留待审核后配置。提交 Issue 时附上代码截图或链接。管理员审核通过并登记域名后，会将密钥发到你填写的联系邮箱。收到密钥后再配置并试投。[投递 API 接入文档](https://github.com/tiouoo/tmail/blob/main/INBOUND.md#cloudflare-email-worker-示例)
   - type: input
     id: domain
     attributes:
       label: 接入域名
       description: 填写用于接收临时邮件的完整域名。
       placeholder: t.mymail.com
+    validations:
+      required: true
+  - type: input
+    id: contact-email
+    attributes:
+      label: 联系邮箱
+      description: 请填写可正常收信且愿意在公开 Issue 中展示的邮箱。审核通过后，投递密钥将发送到这个邮箱。
+      placeholder: contact@example.com
     validations:
       required: true
   - type: input

@@ -9,7 +9,6 @@ INSERT INTO tmail_domains (domain, delivery)
 VALUES ('inbox.example.com', 'cloudflare');
 ```
 
-外部域名使用 `webhook`。申请通过审核后，为每个外部域名单独运行一次命令，将次行 SHA-256 摘要写入数据库，再把首行密钥和站点 URL 私下交给接入方。
 
 ```sh
 node -e "const {randomBytes,createHash}=require('node:crypto'); const key=randomBytes(32).toString('hex'); console.log(key); console.log(createHash('sha256').update(key).digest('base64url'));"
