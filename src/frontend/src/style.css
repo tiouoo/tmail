@@ -554,7 +554,10 @@ nav a.selected {
 }
 .footer > div {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 21px;
+  margin-left: auto;
 }
 .footer a {
   display: flex;

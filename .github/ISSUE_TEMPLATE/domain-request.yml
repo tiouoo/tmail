@@ -1,0 +1,49 @@
+name: 域名接入申请
+description: 申请将你管理的域名加入 tmail.chilo.top
+title: "[域名接入] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先联系管理员登记域名并私下领取投递密钥，完成配置并确认能收到测试邮件，再提交 Issue 等待回复。公开材料请遮盖密钥和私人信息。[投递 API 接入文档](https://github.com/tiouoo/tmail/blob/main/INBOUND.md#cloudflare-email-worker-示例)
+  - type: input
+    id: domain
+    attributes:
+      label: 接入域名
+      description: 填写用于接收临时邮件的完整域名。
+      placeholder: t.mymail.com
+    validations:
+      required: true
+  - type: input
+    id: receiver
+    attributes:
+      label: 邮件接收方式
+      description: 填写已完成接入的邮件接收服务。
+      placeholder: Cloudflare Email Routing + Worker
+    validations:
+      required: true
+  - type: textarea
+    id: integration-proof
+    attributes:
+      label: API 接入证明
+      description: 上传 Tmail 收件箱的测试邮件截图或提供截图链接，确保能核对收件域名、测试主题和收件时间。
+    validations:
+      required: true
+  - type: textarea
+    id: long-term-operation
+    attributes:
+      label: 长期使用证明与维护计划
+      description: 说明预计维护多久以及续费安排，并附至少一项可核验材料，例如公开的域名到期记录链接或脱敏的续费凭证。
+    validations:
+      required: true
+  - type: checkboxes
+    id: commitments
+    attributes:
+      label: 确认事项
+      options:
+        - label: 我能管理该域名的 DNS，并可按管理员要求验证控制权。
+          required: true
+        - label: 我会长期维护该域名和收信服务，如需停用或转移会提前通知管理员。
+          required: true
+        - label: 我已完成投递 API 接入。
+          required: true
