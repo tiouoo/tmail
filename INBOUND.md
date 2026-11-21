@@ -9,7 +9,7 @@ INSERT INTO tmail_domains (domain, delivery)
 VALUES ('inbox.example.com', 'cloudflare');
 ```
 
-外部域名使用 `webhook`。每个外部域名单独运行一次命令，把首行密钥和站点 URL 交给接入方，将次行 SHA-256 摘要写入数据库。
+外部域名使用 `webhook`。申请通过审核后，为每个外部域名单独运行一次命令，将次行 SHA-256 摘要写入数据库，再把首行密钥和站点 URL 私下交给接入方。
 
 ```sh
 node -e "const {randomBytes,createHash}=require('node:crypto'); const key=randomBytes(32).toString('hex'); console.log(key); console.log(createHash('sha256').update(key).digest('base64url'));"
@@ -24,7 +24,7 @@ VALUES ('t.mymail.com', 'webhook', '<第二行的摘要>');
 
 ## Cloudflare Email Worker 示例
 
-把 `t.mymail.com` 的 Catch-all 指向下方的 Worker，再用 `npx wrangler secret put TMAIL_KEY` 保存该域名的投递密钥。
+把 `t.mymail.com` 的 Catch-all 指向下方的 Worker，代码中保留 `env.TMAIL_KEY`，准备好后提交申请。审核通过并收到管理员发放的密钥后，用 `npx wrangler secret put TMAIL_KEY` 保存，再试投邮件。
 
 ```js
 const TMAIL_URL = "https://tmail.chilo.top";

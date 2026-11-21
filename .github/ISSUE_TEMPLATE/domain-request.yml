@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        请先联系管理员登记域名并私下领取投递密钥，完成配置并确认能收到测试邮件，再提交 Issue 等待回复。公开材料请遮盖密钥和私人信息。[投递 API 接入文档](https://github.com/tiouoo/tmail/blob/main/INBOUND.md#cloudflare-email-worker-示例)
+        提交申请前，先写好投递 API 接入代码，将 `TMAIL_KEY` 留待审核后配置。提交 Issue 时附上代码截图或链接。管理员审核通过并登记域名后，才会私下发放密钥。收到密钥后再配置并试投。[投递 API 接入文档](https://github.com/tiouoo/tmail/blob/main/INBOUND.md#cloudflare-email-worker-示例)
   - type: input
     id: domain
     attributes:
@@ -18,7 +18,7 @@ body:
     id: receiver
     attributes:
       label: 邮件接收方式
-      description: 填写已完成接入的邮件接收服务。
+      description: 填写用于接收和投递邮件的服务。
       placeholder: Cloudflare Email Routing + Worker
     validations:
       required: true
@@ -26,7 +26,7 @@ body:
     id: integration-proof
     attributes:
       label: API 接入证明
-      description: 上传 Tmail 收件箱的测试邮件截图或提供截图链接，确保能核对收件域名、测试主题和收件时间。
+      description: 上传接入代码截图或提供可公开查看的代码链接，展示收件域名的匹配条件以及发送投递 API 请求的代码。公开材料请遮盖私人信息。
     validations:
       required: true
   - type: textarea
@@ -45,5 +45,5 @@ body:
           required: true
         - label: 我会长期维护该域名和收信服务，如需停用或转移会提前通知管理员。
           required: true
-        - label: 我已完成投递 API 接入。
+        - label: 我已写好投递 API 接入代码并附上代码截图或链接，会在审核通过并收到密钥后再配置和试投。
           required: true
