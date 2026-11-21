@@ -14,8 +14,29 @@ export async function database(env = {}) {
   }
 }
 
+export async function withDatabase(env, callback) {
+  const db = await database(env);
+  try {
+    return await callback(db);
+  } finally {
+    db.close();
+  }
+}
+
 // Idempotent initialization for API requests, email delivery and scheduled cleanup.
 export const migrations = [
+  `CREATE TABLE IF NOT EXISTS tmail_domains (
+    domain TEXT PRIMARY KEY NOT NULL COLLATE NOCASE
+      CHECK (domain = lower(domain) COLLATE BINARY),
+    delivery TEXT NOT NULL CHECK (delivery IN ('cloudflare', 'webhook')),
+    key_digest TEXT UNIQUE,
+    enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+    CHECK (
+      (delivery = 'cloudflare' AND key_digest IS NULL) OR
+      (delivery = 'webhook' AND key_digest IS NOT NULL
+        AND length(key_digest) = 43 AND key_digest NOT GLOB '*[^A-Za-z0-9_-]*')
+    )
+  )`,
   createTableSql("private"),
   createTableSql("public"),
   `CREATE INDEX IF NOT EXISTS tmail_public_recipient_date ON "public" (envelope_to, received_at DESC, id DESC)`,

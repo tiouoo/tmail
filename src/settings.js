@@ -3,16 +3,7 @@ import config from "../config.js";
 const list = (value = "") =>
   [...new Set(value.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean))];
 export function settings(env = {}) {
-  const emailDomains = list(env.EMAIL_DOMAINS);
-  if (
-    emailDomains.some(
-      (domain) => !/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(domain),
-    )
-  )
-    throw new Error("Invalid EMAIL_DOMAINS");
   const { features } = config;
-  if (features.temporaryMail && emailDomains.length === 0)
-    throw new Error("EMAIL_DOMAINS is required when temporary mail is enabled");
   const destination = (env.FORWARD_TO ?? "").trim().toLowerCase();
   const privateRecipient = (env.ARCHIVE_RECIPIENT ?? "").trim().toLowerCase();
   const isAddress = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -20,19 +11,10 @@ export function settings(env = {}) {
     throw new Error("FORWARD_TO must be a valid email address when forwarding is enabled");
   if (features.archive && !isAddress(privateRecipient))
     throw new Error("ARCHIVE_RECIPIENT must be a valid email address when archiving is enabled");
-  if (
-    destination &&
-    (destination === privateRecipient ||
-      emailDomains.some((domain) => destination.endsWith(`@${domain}`)))
-  )
-    throw new Error("FORWARD_TO must be outside the archive address and EMAIL_DOMAINS");
-  if (emailDomains.some((domain) => privateRecipient.endsWith(`@${domain}`)))
-    throw new Error("ARCHIVE_RECIPIENT must be outside EMAIL_DOMAINS");
+  if (destination && destination === privateRecipient)
+    throw new Error("FORWARD_TO must differ from ARCHIVE_RECIPIENT");
   return {
     ...config,
-    emailDomains: features.temporaryMail ? emailDomains : [],
-    // Retained even when disabled, so temporary mail can never fall through to forwarding.
-    routingDomains: emailDomains,
     destination,
     privateRecipient,
     sitePassword: env.SITE_PASSWORD ?? "",

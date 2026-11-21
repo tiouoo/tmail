@@ -1,38 +1,54 @@
 import { settings } from "../settings.js";
-import { storeEmail, tableForRecipient } from "./storage.js";
+import { withDatabase } from "./database.js";
+import { addressDomain, findDomain, isTemporaryDomain } from "./domains.js";
+import { storeEmail } from "./storage.js";
 
 export async function email(message, env = {}) {
   const config = settings(env);
-  const table = tableForRecipient(message.to, config);
+  const to = message.to.toLowerCase();
+  let operation = "store";
   try {
-    if (table) {
-      const enabled = table === "public" ? config.features.temporaryMail : config.features.archive;
-      if (!enabled) {
-        message.setReject("This mailbox service is disabled");
+    await withDatabase(env, async (db) => {
+      if (to === config.privateRecipient) {
+        if (!config.features.archive) {
+          message.setReject("Email archiving is disabled");
+          return;
+        }
+        const raw = new Uint8Array(await new Response(message.raw).arrayBuffer());
+        await storeEmail(db, { from: message.from, to, raw }, config);
         return;
       }
-      if (table === "public" && message.rawSize > config.maxPublicEmailBytes)
-        throw new Error("Public email exceeds storage size limit");
-      await storeEmail(message, table, env);
-    } else {
-      if (config.routingDomains.includes(message.to.split("@").at(-1).toLowerCase())) {
-        message.setReject("This temporary mailbox domain is unavailable");
+
+      const name = addressDomain(to);
+      const domain = await findDomain(db, name);
+      if (domain) {
+        if (!config.features.temporaryMail || !isTemporaryDomain(name, config) ||
+            domain.enabled !== 1 || domain.delivery !== "cloudflare") {
+          message.setReject("This temporary mailbox domain is unavailable");
+          return;
+        }
+        if (message.rawSize > config.maxPublicEmailBytes) {
+          message.setReject("Email exceeds temporary mailbox size limit");
+          return;
+        }
+        const raw = new Uint8Array(await new Response(message.raw).arrayBuffer());
+        await storeEmail(db, { from: message.from, to, raw }, config, domain);
         return;
       }
+
+      operation = "forward";
       if (!config.features.forward) {
         message.setReject("Email forwarding is disabled");
         return;
       }
-      if (!config.destination || !config.destination.includes("@"))
-        throw new Error("FORWARD_TO is required for forwarding");
-      if (config.destination === message.to.toLowerCase() || tableForRecipient(config.destination, config))
+      if (config.destination === to || await findDomain(db, addressDomain(config.destination)))
         throw new Error("FORWARD_TO must be an external mailbox");
       await message.forward(config.destination);
-    }
+    });
   } catch (error) {
     console.error(
       JSON.stringify({
-        operation: table ? "store" : "forward",
+        operation,
         error: "Email processing failed",
         stored: false,
         retry: true,

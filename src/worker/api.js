@@ -2,7 +2,9 @@ import { Hono } from "hono";
 import { projectUrl } from "../project.js";
 import { requireSessionSecret } from "../settings.js";
 import { bodyLimit } from "hono/body-limit";
-import { database, consumeLimit } from "./database.js";
+import { withDatabase, consumeLimit } from "./database.js";
+import { findDomain, isTemporaryDomain, listDomains } from "./domains.js";
+import { receiveEmail } from "./inbound.js";
 import {
   settings,
   session,
@@ -13,22 +15,26 @@ import {
 } from "./security.js";
 import { createMailboxToken, verifyMailboxToken } from "./mailbox-token.js";
 import { hashToken } from "./hash.js";
-import { tableForRecipient } from "./storage.js";
 import { createMailboxAddress } from "./mailbox-name.js";
 
 export const app = new Hono();
-app.use("/api/*", bodyLimit({ maxSize: 8192 }));
 app.use("/api/*", async (c, next) => {
   c.header("Cache-Control", "no-store");
   c.header("X-Content-Type-Options", "nosniff");
+  const config = settings(c.env);
+  requireSessionSecret(config.sessionSecret);
+  c.set("config", config);
+  await next();
+});
+app.post("/api/inbound", receiveEmail);
+
+app.use("/api/*", bodyLimit({ maxSize: 8192 }));
+app.use("/api/*", async (c, next) => {
   if (!["GET", "HEAD", "OPTIONS"].includes(c.req.method)) {
     const origin = c.req.header("Origin");
     if (origin && origin !== new URL(c.req.url).origin)
       throw new HttpError(403, "不允许跨站操作");
   }
-  const config = settings(c.env);
-  requireSessionSecret(config.sessionSecret);
-  c.set("config", config);
   await next();
 });
 app.onError((error, c) => {
@@ -54,15 +60,6 @@ app.onError((error, c) => {
   );
 });
 
-async function withDatabase(env, callback) {
-  const db = await database(env);
-  try {
-    return await callback(db);
-  } finally {
-    db.close();
-  }
-}
-
 async function body(c) {
   try {
     return await c.req.json();
@@ -87,7 +84,7 @@ async function mailboxAccess(c, db) {
   if (!token || token.length > 2048)
     throw new HttpError(401, "需要有效邮箱密码");
   const address = await verifyMailboxToken(token, config.sessionSecret);
-  if (!address || tableForRecipient(address, config) !== "public")
+  if (!address)
     throw new HttpError(401, "邮箱密码已失效");
   const row = (
     await db.execute({
@@ -114,14 +111,16 @@ async function presentMailbox(row, config) {
   };
 }
 
-app.get("/api/config", (c) => {
+app.get("/api/config", async (c) => {
   const config = c.get("config");
-  c.header("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
+  const emailDomains = config.features.temporaryMail
+    ? await withDatabase(c.env, (db) => listDomains(db, config))
+    : [];
   return c.json({
     name: config.name,
     github: projectUrl,
     features: config.features,
-    emailDomains: config.emailDomains,
+    emailDomains,
     passwordRequired: Boolean(config.sitePassword),
     mailboxTtlSeconds: config.mailboxTtlSeconds,
     turnstile: {
@@ -146,12 +145,18 @@ app.post("/api/session/logout", (c) => {
 });
 
 async function createMailbox(c) {
-  const data = await body(c),
+  const data = (await body(c)) ?? {},
     config = c.get("config");
   if (!config.features.temporaryMail)
     throw new HttpError(403, "临时邮箱功能未启用");
   return withDatabase(c.env, async (db) => {
     await human(c, data, db);
+    const domain = data.domain == null
+      ? (await listDomains(db, config))[0]
+      : typeof data.domain === "string" && data.domain.trim().toLowerCase();
+    if (!domain || !isTemporaryDomain(domain, config) ||
+        (await findDomain(db, domain))?.enabled !== 1)
+      throw new HttpError(400, "不支持此邮箱域名");
     let owner = await session(c.req.raw, config);
     if (!owner) {
       if (
@@ -166,29 +171,27 @@ async function createMailbox(c) {
       !(await consumeLimit(db, `create:${owner}`, 86400, config.createPerDay))
     )
       throw new HttpError(429, "今日邮箱创建额度已用完");
-    const domain = String(data.domain ?? config.emailDomains[0]).toLowerCase();
-    if (
-      !config.emailDomains.includes(domain) ||
-      tableForRecipient(`test@${domain}`, config) !== "public"
-    )
-      throw new HttpError(400, "不支持此邮箱域名");
     const id = crypto.randomUUID(),
       address = await createMailboxAddress(db, domain);
     const now = Date.now(),
       expires = now + config.mailboxTtlSeconds * 1000;
     const statements = [
       {
-        sql: `INSERT INTO tmail_inboxes (id, address, owner, created_at, expires_at) VALUES (?, ?, ?, ?, ?)`,
-        args: [id, address, owner, now, expires],
+        sql: `INSERT INTO tmail_inboxes (id, address, owner, created_at, expires_at)
+          SELECT ?, ?, ?, ?, ?
+          WHERE EXISTS (SELECT 1 FROM tmail_domains WHERE domain = ? AND enabled = 1)`,
+        args: [id, address, owner, now, expires, domain],
       },
     ];
     if (typeof data.replaceId === "string") {
-      statements.unshift({
-        sql: `UPDATE tmail_inboxes SET expires_at = ? WHERE id = ? AND owner = ?`,
-        args: [now - 1, data.replaceId, owner],
+      statements.push({
+        sql: `UPDATE tmail_inboxes SET expires_at = ? WHERE id = ? AND owner = ?
+          AND EXISTS (SELECT 1 FROM tmail_inboxes WHERE id = ?)`,
+        args: [now - 1, data.replaceId, owner, id],
       });
     }
-    await db.batch(statements, "write");
+    const [created] = await db.batch(statements, "write");
+    if (!created.rowsAffected) throw new HttpError(400, "不支持此邮箱域名");
     return c.json(
       await presentMailbox({ id, address, expires_at: expires }, config),
       201,
@@ -200,7 +203,7 @@ app.post("/api/mailboxes", createMailbox);
 app.post("/api/mailboxes/restore", async (c) => {
   if (!c.get("config").features.temporaryMail)
     throw new HttpError(403, "临时邮箱功能未启用");
-  const data = await body(c),
+  const data = (await body(c)) ?? {},
     config = c.get("config");
   return withDatabase(c.env, async (db) => {
     await human(c, data, db);
@@ -215,7 +218,7 @@ app.post("/api/mailboxes/restore", async (c) => {
         args: [password, Date.now()],
       })
     ).rows[0];
-    if (!row || tableForRecipient(row.address, config) !== "public")
+    if (!row)
       throw new HttpError(404, "邮箱密码无效或邮箱已失效");
     return c.json(await presentMailbox(row, config));
   });

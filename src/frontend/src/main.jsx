@@ -11,7 +11,6 @@ import {
   currentMailbox,
   setMailbox,
   readCache,
-  writeCache,
   subscribe,
 } from "./cache.js";
 import Icon from "./Icon.jsx";
@@ -262,8 +261,10 @@ function Inbox({ config }) {
                   <select
                     aria-label="邮箱域名"
                     value={selectedDomain}
+                    disabled={!selectedDomain}
                     onChange={(e) => setDomain(e.target.value)}
                   >
+                    {!selectedDomain && <option value="">暂无可用域名</option>}
                     {config?.emailDomains.map((d) => (
                       <option key={d} value={d}>
                         @{d}
@@ -272,8 +273,8 @@ function Inbox({ config }) {
                   </select>
                 </label>
                 <button
-                  className="button primary"
-                  disabled={disabled}
+                  className="button primary create-mailbox"
+                  disabled={disabled || !selectedDomain}
                   onClick={() => changeMailbox()}
                 >
                   <Icon
@@ -486,16 +487,8 @@ function Inbox({ config }) {
 function App() {
   const configQuery = useQuery({
     queryKey: ["config"],
-    queryFn: async ({ signal }) => {
-      const result = await api("/api/config", { signal });
-      writeCache("site", "config", result.data, 300000);
-      return result.data;
-    },
-    initialData: readCache("site", "config"),
-    initialDataUpdatedAt: 0,
-    refetchOnMount: "always",
+    queryFn: async ({ signal }) => (await api("/api/config", { signal })).data,
     refetchOnWindowFocus: true,
-    staleTime: 300000,
   });
   const config = configQuery.data,
     path = window.location.pathname;
