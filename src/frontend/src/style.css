@@ -1,5 +1,12 @@
+@font-face {
+  font-family: "Alimama";
+  src: url("https://cdn.chilo.top/standard/alimama.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   font-family:
+    "Alimama",
     Inter,
     -apple-system,
     BlinkMacSystemFont,
@@ -17,7 +24,6 @@
   --line: #e8ece7;
   --radius: 12px;
   --control-height: 36px;
-  --serif: Georgia, "Noto Serif SC", "Songti SC", serif;
 }
 * {
   box-sizing: border-box;
@@ -155,7 +161,6 @@ nav a.selected {
   flex-shrink: 0;
 }
 .page-intro h1 {
-  font-family: var(--serif);
   font-size: 43px;
   font-weight: 500;
   letter-spacing: -1.5px;
@@ -208,7 +213,6 @@ nav a.selected {
 }
 .address {
   min-width: 0;
-  font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 25px;
   letter-spacing: -0.7px;
   color: #2d4233;
@@ -216,7 +220,6 @@ nav a.selected {
   font-weight: 500;
 }
 .address.placeholder {
-  font-family: var(--serif);
   font-size: 24px;
   color: #7f8e7f;
   letter-spacing: 0.3px;
@@ -402,7 +405,6 @@ nav a.selected {
 .count {
   display: inline-grid;
   place-items: center;
-  font-family: monospace;
   font-weight: 400;
   background: #f1f5ee;
   color: #7c8e78;
@@ -472,7 +474,6 @@ nav a.selected {
   transform: rotate(6deg);
 }
 .empty h2 {
-  font-family: var(--serif);
   font-size: 18px;
   letter-spacing: 1px;
   color: #65785e;
@@ -589,7 +590,6 @@ nav a.selected {
   border: 1px solid #e9eee3;
   color: #8ca078;
   border-radius: var(--radius);
-  font-family: Georgia, serif;
   flex-shrink: 0;
 }
 .mail-summary {
