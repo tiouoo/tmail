@@ -1,6 +1,6 @@
 # Tmail
 
-基于 React、Vercel、Cloudflare Email Workers 和 Turso 的临时邮箱, 支持普通邮件转发至指定邮箱/回流邮件归档和过期数据清理, 以及只读秘密收件箱
+基于 React、Vercel、Cloudflare Email Workers 和 Turso 的临时邮箱，支持邮件转发、回流邮件归档和过期数据清理。Worker 将归档邮件写入 Turso 的 `private` 表，登录 OINK 后可在收件箱查看。
 
 ## 部署
 
@@ -28,7 +28,6 @@
 | `FORWARD_TO`                                                                      | 普通邮件的转发目标；启用转发时必填                                                                                                        |
 | `ARCHIVE_RECIPIENT`                                                               | QQ 自动转发回来的归档收件地址                                                                                                             |
 | `SITE_PASSWORD`                                                                   | 可选的站点访问密码                                                                                                                        |
-| `PRIVATE_MAIL_PATH`、`PRIVATE_MAIL_PASSWORD`                                      | 可选的秘密邮箱路径与密码，仅在 Vercel/Worker 环境变量中设置；完整入口为 `/<路径>/<密码>`，只读 `private` 表，无人机验证，错误入口返回 404 |
 | `TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET`、`TURNSTILE_HOSTNAMES`                   | Turnstile 公钥、私钥和获准域名列表                                                                                                        |
 | `TURNSTILE_ENABLED`                                                               | 是否启用验证, 设为 `false` 可关闭                                                                                                         |
 | `TEMPORARY_MAIL_ENABLED`、`FORWARD_ENABLED`、`ARCHIVE_ENABLED`、`CLEANUP_ENABLED` | 功能开关, 值为 `true` 或 `false`                                                                                                          |

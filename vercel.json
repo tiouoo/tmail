@@ -5,13 +5,12 @@
   "outputDirectory": "src/frontend/dist",
   "regions": ["sfo1"],
   "functions": {
-    "api/index.js": { "maxDuration": 30, "includeFiles": "src/frontend/dist/index.html" }
+    "api/index.js": { "maxDuration": 30 }
   },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api" },
     { "source": "/mail/:path*", "destination": "/index.html" },
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/((?!assets/|favicon\\.svg$|LICENSE\\.txt$).+)", "destination": "/api" }
+    { "source": "/", "destination": "/index.html" }
   ],
   "headers": [
     { "source": "/assets/:path*", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
