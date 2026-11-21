@@ -248,7 +248,6 @@ nav a.selected {
 }
 .primary:hover:enabled {
   background: #26412e;
-  transform: translateY(-1px);
 }
 .subtle {
   color: #738174;
