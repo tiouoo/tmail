@@ -6,7 +6,8 @@
 
 1. 在 Turso 创建数据库并生成读写令牌。用 `.env` 配置数据库连接，运行 `npm run db:init`，然后登记临时邮箱域名。[域名登记与接入](./INBOUND.md)
 2. 将仓库部署到 Vercel，使用 Node.js 24，并按下表设置环境变量。启用 Turnstile 时，在控件中授权实际访问的站点域名。
-3. 在 GitHub Actions Secrets 中设置 `CLOUDFLARE_ACCOUNT_ID` 和 `CLOUDFLARE_API_TOKEN`，令牌使用 **Edit Cloudflare Workers** 模板。在默认分支运行 **Deploy Email Worker**。部署后给 Worker 设置下表中的共享变量。
+3. 部署 Worker 前，按自己的收信需求检查并修改根目录的直收判断。默认允许在 Turso 中登记为 `cloudflare` 且已启用的临时邮箱域名，域名可以是主域名或子域名。[email-routing.js](./email-routing.js)
+   - 在 GitHub Actions Secrets 中设置 `CLOUDFLARE_ACCOUNT_ID` 和 `CLOUDFLARE_API_TOKEN`，令牌使用 **Edit Cloudflare Workers** 模板。在默认分支运行 **Deploy Email Worker**。部署后给 Worker 设置下表中的共享变量。
 4. 在 Worker 所属的 Cloudflare 账户启用 Email Routing，按控制台配置 DNS，并验证至少一个目标邮箱。为登记为 `cloudflare` 的临时邮箱域名配置 Catch-all，指向 `tmail` Worker。[Email Routing](https://developers.cloudflare.com/email-service/get-started/route-emails/)
    - 启用转发时，验证 `FORWARD_TO`，并将需要转发的收件地址路由到 Worker。转发入口使用独立于临时邮箱的域名。
    - 启用归档时，为归档域名启用 Email Routing，将 `ARCHIVE_RECIPIENT` 单独路由到 Worker，再在源邮箱设置自动转发到该地址。

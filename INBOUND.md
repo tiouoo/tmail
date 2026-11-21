@@ -17,23 +17,24 @@ node -e "const {randomBytes,createHash}=require('node:crypto'); const key=random
 
 ```sql
 INSERT INTO tmail_domains (domain, delivery, key_digest)
-VALUES ('example.org', 'webhook', '<第二行的摘要>');
+VALUES ('t.mymail.com', 'webhook', '<第二行的摘要>');
 ```
 
 已启用的域名通过 `GET /api/config` 的 `emailDomains` 字段返回。将 `enabled` 改为 `0` 可停用域名，已有邮箱仍可读取至到期。外部域名更换 `key_digest` 后，新密钥立即生效。
 
 ## Cloudflare Email Worker 示例
 
-把接入域名的 Catch-all 指向下方的 Worker。设置变量 `TMAIL_URL` 为 Tmail 站点地址（例如 `https://mail.example.com`），再用 `npx wrangler secret put TMAIL_KEY` 保存该域名的投递密钥。
+把 `t.mymail.com` 的 Catch-all 指向下方的 Worker，再用 `npx wrangler secret put TMAIL_KEY` 保存该域名的投递密钥。
 
 ```js
-// 改成管理员登记的外部域名，可以是主域名或子域名。
-const TMAIL_DOMAIN = "example.org";
+const TMAIL_URL = "https://tmail.chilo.top";
+const TMAIL_DOMAIN = "t.mymail.com";
 const MAX_EMAIL_BYTES = 2 * 1024 * 1024;
 
 export default {
   async email(message, env) {
-    // 从 SMTP 信封收件地址提取域名，只投递完全匹配的域名。
+    // 本例仅用带 t. 前缀的 t.mymail.com 接收临时邮件。
+    // SMTP 信封收件域名必须等于 t.mymail.com，否则不投递到 Tmail。
     const domain = message.to.slice(message.to.lastIndexOf("@") + 1).toLowerCase();
     if (domain !== TMAIL_DOMAIN) {
       // 共用 Worker 时，可以在这个分支调用现有的收信逻辑。
@@ -47,7 +48,7 @@ export default {
     }
 
     // 把信封地址放进请求头，将原始邮件流作为请求体发送。
-    const response = await fetch(new URL("/api/inbound", env.TMAIL_URL), {
+    const response = await fetch(new URL("/api/inbound", TMAIL_URL), {
       method: "POST",
       redirect: "error",
       headers: {
@@ -72,10 +73,10 @@ export default {
 ## 用 curl 测试
 
 ```sh
-curl --fail-with-body 'https://mail.example.com/api/inbound' \
+curl --fail-with-body 'https://tmail.chilo.top/api/inbound' \
   -H "Authorization: Bearer $TMAIL_KEY" \
   -H 'X-Envelope-From: sender@example.net' \
-  -H 'X-Envelope-To: actual-mailbox@example.org' \
+  -H 'X-Envelope-To: actual-mailbox@t.mymail.com' \
   -H 'Content-Type: message/rfc822' \
   --data-binary @message.eml
 ```

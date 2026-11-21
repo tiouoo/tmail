@@ -1,6 +1,7 @@
+import { canReceiveCloudflareMail } from "../../email-routing.js";
 import { settings } from "../settings.js";
 import { withDatabase } from "./database.js";
-import { addressDomain, findDomain, isTemporaryDomain } from "./domains.js";
+import { addressDomain, findDomain } from "./domains.js";
 import { storeEmail } from "./storage.js";
 
 export async function email(message, env = {}) {
@@ -22,8 +23,7 @@ export async function email(message, env = {}) {
       const name = addressDomain(to);
       const domain = await findDomain(db, name);
       if (domain) {
-        if (!config.features.temporaryMail || !isTemporaryDomain(name, config) ||
-            domain.enabled !== 1 || domain.delivery !== "cloudflare") {
+        if (!canReceiveCloudflareMail(name, domain, config)) {
           message.setReject("This temporary mailbox domain is unavailable");
           return;
         }
