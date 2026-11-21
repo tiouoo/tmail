@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { projectUrl } from "../project.js";
 import { requireSessionSecret } from "../settings.js";
 import { bodyLimit } from "hono/body-limit";
 import { database, consumeLimit } from "./database.js";
@@ -73,7 +74,8 @@ async function body(c) {
 async function human(c, data, db) {
   const config = c.get("config");
   const ip = c.req.header("CF-Connecting-IP") ?? "local";
-  if (!(await consumeLimit(db, `human:${await hashToken(ip)}`, 60, 12)))
+  const allowed = await consumeLimit(db, `human:${await hashToken(ip)}`, 60, config.mailboxRequestsPerMinute);
+  if (!allowed)
     throw new HttpError(429, "操作过于频繁，请稍后再试");
   await verifyTurnstile(c.req.raw, data.turnstileToken, config);
 }
@@ -117,7 +119,7 @@ app.get("/api/config", (c) => {
   c.header("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
   return c.json({
     name: config.name,
-    github: config.github,
+    github: projectUrl,
     features: config.features,
     emailDomains: config.emailDomains,
     passwordRequired: Boolean(config.sitePassword),

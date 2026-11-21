@@ -2,13 +2,26 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, normalizePath, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import devServer from "@hono/vite-dev-server";
+import config from "../../config.js";
+
+const htmlEntities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 
 export default defineConfig(({ command, mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ""), ...process.env };
   return {
     root: fileURLToPath(new URL(".", import.meta.url)),
+    define: {
+      __PUBLIC_CONFIG__: JSON.stringify({ name: config.name, inboxPolling: config.inboxPolling }),
+    },
     plugins: [
       react(),
+      {
+        name: "site-name",
+        transformIndexHtml(html) {
+          const name = config.name.replace(/[&<>"']/g, (char) => htmlEntities[char]);
+          return html.replaceAll("%SITE_NAME%", () => name);
+        },
+      },
       ...(command === "serve"
         ? [
             devServer({

@@ -6,6 +6,7 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 import { api, mailboxRequest, retry } from "./api.js";
+import { projectAuthor, projectUrl } from "../../project.js";
 import {
   currentMailbox,
   setMailbox,
@@ -16,6 +17,7 @@ import {
 import Icon from "./Icon.jsx";
 import "./style.css";
 
+const { name: siteName, inboxPolling } = __PUBLIC_CONFIG__;
 const Turnstile = lazy(() =>
   import("@marsidev/react-turnstile").then((m) => ({ default: m.Turnstile })),
 );
@@ -170,7 +172,10 @@ function Inbox({ config }) {
     refetchInterval: (q) =>
       !visible || !box
         ? false
-        : Math.min(120000, 20000 * 2 ** Math.min(q.state.fetchFailureCount, 3)),
+        : Math.min(
+            inboxPolling.maxIntervalMs,
+            inboxPolling.intervalMs * 2 ** q.state.fetchFailureCount,
+          ),
     refetchIntervalInBackground: false,
   });
   const mailboxPassword = box
@@ -499,11 +504,11 @@ function App() {
       <header className="header">
         <a className="brand" href="/">
           <span>
-            {config?.name ?? "Tmail"}<span className="brand-period">.</span>
+            {siteName}<span className="brand-period">.</span>
           </span>
         </a>
         <nav>
-          <a href={config?.github} target="_blank" rel="noreferrer">
+          <a href={projectUrl} target="_blank" rel="noreferrer">
             <Icon name="github" size={17} />
             <span>GitHub</span>
             <Icon name="external" size={12} />
@@ -516,7 +521,7 @@ function App() {
           {config && !config.features?.temporaryMail ? (
             <div className="loading">临时邮箱功能未启用</div>
           ) : path.startsWith("/mail/") ? (
-            <MailPage />
+            <MailPage siteName={siteName} />
           ) : config ? (
             <Inbox config={config} />
           ) : configQuery.isError ? (
@@ -532,10 +537,10 @@ function App() {
       </main>
       <footer className="footer">
         <span>
-          © {new Date().getFullYear()} {config?.name ?? "Tmail"}
+          © {new Date().getFullYear()} {projectAuthor} · {siteName}
         </span>
         <div>
-          <a href={config?.github} target="_blank" rel="noreferrer">
+          <a href={projectUrl} target="_blank" rel="noreferrer">
             GitHub <Icon name="external" size={12} />
           </a>
         </div>

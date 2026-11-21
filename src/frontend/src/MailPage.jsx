@@ -6,7 +6,7 @@ import { mailboxRequest } from "./api.js";
 import { readCache } from "./cache.js";
 import Icon from "./Icon.jsx";
 
-export default function MailPage() {
+export default function MailPage({ siteName }) {
   const box = useMailbox(),
     [, , boxId, messageId] = window.location.pathname.split("/");
   const valid = box?.id === boxId;
@@ -29,8 +29,8 @@ export default function MailPage() {
   });
   const message = query.data;
   useEffect(() => {
-    document.title = `${valid && message?.subject ? message.subject : "邮件"} · Tmail`;
-  }, [message, valid]);
+    document.title = `${valid && message?.subject ? message.subject : "邮件"} · ${siteName}`;
+  }, [message, valid, siteName]);
   if (!valid)
     return (
       <section className="panel detail-empty">

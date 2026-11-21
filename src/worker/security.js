@@ -35,7 +35,7 @@ export async function verifyTurnstile(request, token, config) {
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
         method: "POST",
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(config.turnstile.verifyTimeoutMs),
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
           secret: config.turnstile.secretKey,
