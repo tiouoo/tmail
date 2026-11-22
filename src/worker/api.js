@@ -4,6 +4,7 @@ import { requireSessionSecret } from "../settings.js";
 import { bodyLimit } from "hono/body-limit";
 import { withDatabase, consumeLimit } from "./database.js";
 import { findDomain, isTemporaryDomain, listDomains } from "./domains.js";
+import { domainAdmin } from "./domain-admin.js";
 import { receiveEmail } from "./inbound.js";
 import {
   settings,
@@ -59,6 +60,8 @@ app.onError((error, c) => {
     status,
   );
 });
+
+app.route("/api/domains", domainAdmin);
 
 async function body(c) {
   try {

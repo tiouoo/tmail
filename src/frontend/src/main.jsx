@@ -21,6 +21,7 @@ const Turnstile = lazy(() =>
   import("@marsidev/react-turnstile").then((m) => ({ default: m.Turnstile })),
 );
 const MailPage = lazy(() => import("./MailPage.jsx"));
+const DomainsPage = lazy(() => import("./DomainsPage.jsx"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry, refetchOnWindowFocus: false, gcTime: 300000 },
@@ -485,13 +486,15 @@ function Inbox({ config }) {
 }
 
 function App() {
+  const path = window.location.pathname;
+  const managesDomains = path === "/domains" || path === "/domains/";
   const configQuery = useQuery({
     queryKey: ["config"],
     queryFn: async ({ signal }) => (await api("/api/config", { signal })).data,
+    enabled: !managesDomains,
     refetchOnWindowFocus: true,
   });
-  const config = configQuery.data,
-    path = window.location.pathname;
+  const config = configQuery.data;
   return (
     <div className="app-shell">
       <header className="header">
@@ -511,7 +514,9 @@ function App() {
       <main>
         <Notice>{configQuery.error?.message}</Notice>
         <Suspense fallback={<Loading />}>
-          {config && !config.features?.temporaryMail ? (
+          {managesDomains ? (
+            <DomainsPage siteName={siteName} />
+          ) : config && !config.features?.temporaryMail ? (
             <div className="loading">临时邮箱功能未启用</div>
           ) : path.startsWith("/mail/") ? (
             <MailPage siteName={siteName} />

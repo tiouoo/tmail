@@ -1,29 +1,17 @@
 # 临时邮箱域名接入
 
-## 管理员登记
+## 管理域名
 
-管理员直接在 Turso 的 `tmail_domains` 表登记域名。内置域名由 Email Routing 交给 Tmail Worker 直接入库，只需登记域名和投递方式。
-
-```sql
-INSERT INTO tmail_domains (domain, delivery)
-VALUES ('inbox.example.com', 'cloudflare');
-```
-
-
-```sh
-node -e "const {randomBytes,createHash}=require('node:crypto'); const key=randomBytes(32).toString('hex'); console.log(key); console.log(createHash('sha256').update(key).digest('base64url'));"
-```
-
-```sql
-INSERT INTO tmail_domains (domain, delivery, key_digest)
-VALUES ('t.mymail.com', 'webhook', '<第二行的摘要>');
-```
-
-已启用的域名通过 `GET /api/config` 的 `emailDomains` 字段返回。将 `enabled` 改为 `0` 可停用域名，已有邮箱仍可读取至到期。外部域名更换 `key_digest` 后，新密钥立即生效。
+1. 在 Vercel 设置服务端环境变量 `DOMAINS_ADMIN_PASSWORD` 后部署站点。本地运行 `npm run dev` 时将变量写入 `.env`，使用 `npm run worker:dev` 时写入 `.dev.vars`。
+2. 在浏览器地址栏直接输入站点地址加 `/domains`，例如 `https://tmail.example.com/domains`。在弹窗中输入管理员密码。
+3. 输入完整域名，选择投递方式，再点击 **添加域名**。已有域名会自动显示。
+   - **Cloudflare 直收** 适用于将 Catch-all 指向 Tmail Worker 的域名，例如 `inbox.example.com`。
+   - **外部 Webhook** 适用于通过 `/api/inbound` 投递的域名，例如 `t.mymail.com`。添加后请立即复制页面显示的投递密钥，并在投递端保存为 `TMAIL_KEY`。密钥明文仅在生成时显示。
+4. 在域名列表中可 **停用** 或 **启用** 域名。停用后，该域名从建箱选项中移除并停止收信，已有邮件仍可读取至邮箱到期。外部 Webhook 域名可 **轮换密钥**，旧密钥立即失效，需将投递端的 `TMAIL_KEY` 更新为新值。
 
 ## Cloudflare Email Worker 示例
 
-把 `t.mymail.com` 的 Catch-all 指向下方的 Worker，代码中保留 `env.TMAIL_KEY`，准备好后提交申请。审核通过并收到管理员发放的密钥后，用 `npx wrangler secret put TMAIL_KEY` 保存，再试投邮件。
+把 `t.mymail.com` 的 Catch-all 指向下方的 Worker。投递时需要环境变量 `TMAIL_KEY` 。
 
 ```js
 const TMAIL_URL = "https://tmail.chilo.top";
