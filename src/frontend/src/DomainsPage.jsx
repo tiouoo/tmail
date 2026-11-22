@@ -52,7 +52,7 @@ export default function DomainsPage({ siteName }) {
   const [credential, setCredential] = useState("");
   const [domains, setDomains] = useState([]);
   const [issuedKey, setIssuedKey] = useState(null);
-  const [rotateDomain, setRotateDomain] = useState("");
+  const [confirmation, setConfirmation] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -64,7 +64,7 @@ export default function DomainsPage({ siteName }) {
     setCredential("");
     setDomains([]);
     setIssuedKey(null);
-    setRotateDomain("");
+    setConfirmation(null);
     setNotice("");
   }
 
@@ -91,10 +91,15 @@ export default function DomainsPage({ siteName }) {
     setNotice("");
     try {
       const { data } = await domainRequest(credential, path, method, body);
-      setDomains((list) => [...list.filter(({ domain }) => domain !== data.domain.domain), data.domain]
-        .sort((a, b) => a.domain.localeCompare(b.domain)));
-      if (data.key) setIssuedKey({ domain: data.domain.domain, key: data.key });
-      setRotateDomain("");
+      if (method === "DELETE") {
+        setDomains((list) => list.filter(({ domain }) => domain !== data.domain));
+        setIssuedKey((current) => current?.domain === data.domain ? null : current);
+      } else {
+        setDomains((list) => [...list.filter(({ domain }) => domain !== data.domain.domain), data.domain]
+          .sort((a, b) => a.domain.localeCompare(b.domain)));
+        if (data.key) setIssuedKey({ domain: data.domain.domain, key: data.key });
+      }
+      setConfirmation(null);
       return true;
     } catch (error) {
       if (error.status === 401) lock();
@@ -112,6 +117,7 @@ export default function DomainsPage({ siteName }) {
     if (await save("", "POST", { domain, delivery })) form.reset();
   }
 
+  const deleting = confirmation?.action === "delete";
   return (
     <section className="panel domains-panel" aria-labelledby="domains-title">
       <div className="panel-top">
@@ -157,14 +163,17 @@ export default function DomainsPage({ siteName }) {
                     <strong>{domain}</strong>
                     <span>{deliveryLabels[delivery]} · {enabled ? "已启用" : "已停用"}</span>
                   </div>
-                  {rotateDomain === domain ? (
+                  {confirmation?.domain === domain ? (
                     <div className="domains-actions">
-                      <span>旧密钥将立即失效</span>
+                      <span>{deleting ? "删除后将停止建箱和收信" : "旧密钥将立即失效"}</span>
                       <button className="button primary" disabled={busy}
-                        onClick={() => void save(`/${domain}/rotate-key`, "POST")}>
-                        确认轮换
+                        onClick={() => {
+                          if (deleting) void save(`/${domain}`, "DELETE");
+                          else void save(`/${domain}/rotate-key`, "POST");
+                        }}>
+                        {deleting ? "确认删除" : "确认轮换"}
                       </button>
-                      <button className="button subtle" disabled={busy} onClick={() => setRotateDomain("")}>
+                      <button className="button subtle" disabled={busy} onClick={() => setConfirmation(null)}>
                         取消
                       </button>
                     </div>
@@ -175,10 +184,15 @@ export default function DomainsPage({ siteName }) {
                         {enabled ? "停用" : "启用"}
                       </button>
                       {delivery === "webhook" && (
-                        <button className="button subtle" disabled={busy} onClick={() => setRotateDomain(domain)}>
+                        <button className="button subtle" disabled={busy}
+                          onClick={() => setConfirmation({ domain, action: "rotate" })}>
                           轮换密钥
                         </button>
                       )}
+                      <button className="button subtle" disabled={busy}
+                        onClick={() => setConfirmation({ domain, action: "delete" })}>
+                        删除
+                      </button>
                     </div>
                   )}
                 </li>

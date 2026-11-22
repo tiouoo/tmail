@@ -101,6 +101,15 @@ domainAdmin.patch("/:domain", async (c) => {
   return c.json({ domain: rows[0] });
 });
 
+domainAdmin.delete("/:domain", async (c) => {
+  const domain = domainName(c.req.param("domain"));
+  await c.get("domainsDb").execute({
+    sql: "DELETE FROM tmail_domains WHERE domain = ?",
+    args: [domain],
+  });
+  return c.json({ domain });
+});
+
 domainAdmin.post("/:domain/rotate-key", async (c) => {
   const domain = domainName(c.req.param("domain"));
   const key = newDeliveryKey();

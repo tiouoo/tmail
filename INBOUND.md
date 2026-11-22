@@ -7,7 +7,6 @@
 3. 输入完整域名，选择投递方式，再点击 **添加域名**。已有域名会自动显示。
    - **Cloudflare 直收** 适用于将 Catch-all 指向 Tmail Worker 的域名，例如 `inbox.example.com`。
    - **外部 Webhook** 适用于通过 `/api/inbound` 投递的域名，例如 `t.mymail.com`。添加后请立即复制页面显示的投递密钥，并在投递端保存为 `TMAIL_KEY`。密钥明文仅在生成时显示。
-4. 在域名列表中可 **停用** 或 **启用** 域名。停用后，该域名从建箱选项中移除并停止收信，已有邮件仍可读取至邮箱到期。外部 Webhook 域名可 **轮换密钥**，旧密钥立即失效，需将投递端的 `TMAIL_KEY` 更新为新值。
 
 ## Cloudflare Email Worker 示例
 
