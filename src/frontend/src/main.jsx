@@ -533,9 +533,6 @@ function App() {
           © {new Date().getFullYear()} {projectAuthor} · {siteName}
         </span>
         <div>
-          <a href={`${projectUrl}/blob/main/DOMAIN-REQUEST.md`} target="_blank" rel="noreferrer">
-            将自己的域名添加至Tmail
-          </a>
           <a href={projectUrl} target="_blank" rel="noreferrer">
             GitHub <Icon name="external" size={12} />
           </a>
